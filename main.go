@@ -31,10 +31,8 @@ func main() {
   _, err = pool.Exec("USE charityShowcase")
   if (err != nil) { logError.Panic(err) }
 
-  http.HandleFunc("/createCharityProject", createCharityProject)
-  http.HandleFunc("/getCharityProjects", getCharityProjects)
-  http.HandleFunc("/createTechnology", createTechnology)
-  http.HandleFunc("/getTechnologies", getTechnologies)
+  http.HandleFunc("/charity-projects", handleCharityProjectsRequest)
+  http.HandleFunc("/technologies", handleTechnologiesRequest)
   http.HandleFunc("/login", login)
   http.HandleFunc("/register", register)
   
@@ -103,12 +101,28 @@ func login(w http.ResponseWriter, r *http.Request) {
   w.Write(jsonUser)
 }
 
-func createTechnology(w http.ResponseWriter, r *http.Request) {
+func handleTechnologiesRequest(w http.ResponseWriter, r *http.Request) {
   w.Header().Add("Access-Control-Allow-Origin", "*")
   w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+  w.Header().Add("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
 
   requestBody, _ := ioutil.ReadAll(r.Body)
-  var technology TechStack
+  switch r.Method {
+    case http.MethodPost: {
+      createTechnology(w, requestBody)
+    }
+    case http.MethodGet: {
+      getTechnologies(w, requestBody)
+    }
+    case http.MethodPut: {
+    }
+    case http.MethodDelete: {
+    }
+  }
+}
+
+func createTechnology(w http.ResponseWriter, requestBody []byte) {
+  var technology Technology
   var err = json.Unmarshal(requestBody, &technology)
   if (err != nil) {
     logError.Print(err)
@@ -116,7 +130,7 @@ func createTechnology(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  sqlString := fmt.Sprintf(`INSERT INTO techStack (name, imageFileName) VALUES ('%v', '%v')`, technology.Name, technology.SVG)
+  sqlString := fmt.Sprintf(`INSERT INTO technology (name, imageFileName) VALUES ('%v', '%v')`, technology.Name, technology.SVG)
   log.Print("createTechnology: ", sqlString)
   _, err = pool.Exec(sqlString)
   if (err != nil) {
@@ -126,10 +140,8 @@ func createTechnology(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-func getTechnologies(w http.ResponseWriter, r *http.Request) {
-  w.Header().Add("Access-Control-Allow-Origin", "*")
-
-  result, err := pool.Query(`SELECT name FROM techStack`)
+func getTechnologies(w http.ResponseWriter, requestBody []byte) {
+  result, err := pool.Query(`SELECT name FROM technology`)
   if (err != nil) {
     logError.Print(err)
     w.WriteHeader(http.StatusInternalServerError)
@@ -152,11 +164,28 @@ func getTechnologies(w http.ResponseWriter, r *http.Request) {
   w.Write(jsonTechnologies)
 }
 
-func createCharityProject(w http.ResponseWriter, r *http.Request) {
+func handleCharityProjectsRequest(w http.ResponseWriter, r *http.Request) {
   w.Header().Add("Access-Control-Allow-Origin", "*")
   w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+  w.Header().Add("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
 
   requestBody, _ := ioutil.ReadAll(r.Body)
+  switch r.Method {
+    case http.MethodPost: {
+      createCharityProject(w, requestBody)
+    }
+    case http.MethodGet: {
+      getCharityProjects(w, requestBody)
+    }
+    case http.MethodPut: {
+      updateCharityProject(w, requestBody)
+    }
+    case http.MethodDelete: {
+    }
+  }
+}
+
+func createCharityProject(w http.ResponseWriter, requestBody []byte) {
   var charityProject CharityProject
   var err = json.Unmarshal(requestBody, &charityProject)
   if (err != nil) {
@@ -174,8 +203,8 @@ func createCharityProject(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  for i := 0; i < len(charityProject.TechStack); i++ {
-    sqlString = fmt.Sprintf(`INSERT INTO techStackToCharityProject (techStack, charityProject) VALUES ('%v', '%v')`, charityProject.TechStack[i].Name, charityProject.Name)
+  for i := 0; i < len(charityProject.Technologies); i++ {
+    sqlString = fmt.Sprintf(`INSERT INTO technologyToCharityProject (technology, charityProject) VALUES ('%v', '%v')`, charityProject.Technologies[i].Name, charityProject.Name)
     log.Print("createCharityProject: ", sqlString)
     _, err = pool.Exec(sqlString)
     if (err != nil) {
@@ -186,13 +215,11 @@ func createCharityProject(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+// var page = r.URL.Query()["page"][0]
+// var sort = r.URL.Query()["sort"][0]
+
 // TODO: Add a count for how many we want to display on one page
-func getCharityProjects(w http.ResponseWriter, r *http.Request) {
-  w.Header().Add("Access-Control-Allow-Origin", "*")
-
-  // var page = r.URL.Query()["page"][0]
-  // var sort = r.URL.Query()["sort"][0]
-
+func getCharityProjects(w http.ResponseWriter, requestBody []byte) {
   charityProjectResult, err := pool.Query(`SELECT * FROM charityProject`)
   if (err != nil) {
     logError.Print(err)
@@ -213,46 +240,46 @@ func getCharityProjects(w http.ResponseWriter, r *http.Request) {
       Name: name,
       ShortDescription: shortDescription,
       LongDescription: longDescription,
-      TechStack: make([]TechStack, 0),
+      Technologies: make([]Technology, 0),
     }
 
     charityProjects = append(charityProjects, charityProject)
   }
 
   for i := 0; i < len(charityProjects); i++ {
-    sqlString := fmt.Sprintf(`SELECT techStack FROM techStackToCharityProject WHERE charityProject='%v'`, charityProjects[i].Name)
-    techStackToCharityProjectResult, err := pool.Query(sqlString)
+    sqlString := fmt.Sprintf(`SELECT technology FROM technologyToCharityProject WHERE charityProject='%v'`, charityProjects[i].Name)
+    technologyToCharityProjectResult, err := pool.Query(sqlString)
     if (err != nil) {
       logError.Print(err)
       w.WriteHeader(http.StatusInternalServerError)
       return
     }
-    for techStackToCharityProjectResult.Next() {
-      var techStackName string
-      if err := techStackToCharityProjectResult.Scan(&techStackName); err != nil {
+    for technologyToCharityProjectResult.Next() {
+      var technologyName string
+      if err := technologyToCharityProjectResult.Scan(&technologyName); err != nil {
         logError.Print(err)
         w.WriteHeader(http.StatusInternalServerError)
         return
       }
 
-      charityProjects[i].TechStack = append(charityProjects[i].TechStack, TechStack {
-        Name: techStackName,
+      charityProjects[i].Technologies = append(charityProjects[i].Technologies, Technology {
+        Name: technologyName,
       })
     }
   }
   for charityIndex := 0; charityIndex < len(charityProjects); charityIndex++ {
-    for technologyIndex := 0; technologyIndex < len(charityProjects[charityIndex].TechStack); technologyIndex++ {
-      technology := charityProjects[charityIndex].TechStack[technologyIndex]
-      sqlString := fmt.Sprintf(`SELECT imageFileName FROM techStack WHERE name='%v'`, technology.Name)
-      techStackResult := pool.QueryRow(sqlString)
-      var techStackImageFileName string
-      err = techStackResult.Scan(&techStackImageFileName)
+    for technologyIndex := 0; technologyIndex < len(charityProjects[charityIndex].Technologies); technologyIndex++ {
+      technology := charityProjects[charityIndex].Technologies[technologyIndex]
+      sqlString := fmt.Sprintf(`SELECT imageFileName FROM technology WHERE name='%v'`, technology.Name)
+      technologyResult := pool.QueryRow(sqlString)
+      var technologyImageFileName string
+      err = technologyResult.Scan(&technologyImageFileName)
       if (err != nil) {
         logError.Print(err)
         w.WriteHeader(http.StatusInternalServerError)
         return
       }
-      technology.SVG = techStackImageFileName
+      technology.SVG = technologyImageFileName
     }
   }
 
@@ -262,7 +289,37 @@ func getCharityProjects(w http.ResponseWriter, r *http.Request) {
   w.Write(jsonCharityProjects)
 }
 
-type TechStack struct {
+func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
+  var charityProject CharityProjectUpdate
+  var err = json.Unmarshal(requestBody, &charityProject)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  sqlString := fmt.Sprintf(`UPDATE charityProject SET name='%v', shortDescription='%v', longDescription='%v' WHERE name='%v'`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.OldName)
+  log.Print("updateCharityProject: ", sqlString)
+  _, err = pool.Exec(sqlString)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  for i := 0; i < len(charityProject.Technologies); i++ {
+    sqlString = fmt.Sprintf(`UPDATE technologyToCharityProject SET technology='%v' WHERE technology='%v' and charityProject='%v'`, charityProject.Technologies[i].Name, charityProject.Technologies[i].OldName, charityProject.Name)
+    log.Print("updateCharityProject: ", sqlString)
+    _, err = pool.Exec(sqlString)
+    if (err != nil) {
+      logError.Print(err)
+      w.WriteHeader(http.StatusInternalServerError)
+      return
+    }
+  }
+}
+
+type Technology struct {
   Name string
   SVG string
 }
@@ -270,7 +327,19 @@ type CharityProject struct {
   Name string
   ShortDescription string
   LongDescription string
-  TechStack []TechStack
+  Technologies []Technology
+}
+type TechnologyUpdate struct {
+  OldName string
+  Name string
+  SVG string
+}
+type CharityProjectUpdate struct {
+  OldName string
+  Name string
+  ShortDescription string
+  LongDescription string
+  Technologies []TechnologyUpdate
 }
 
 type User struct {
@@ -280,5 +349,9 @@ type User struct {
 }
 
 // TODO:
+// charity-projects/:name/technologies
+// Abstract update, create, and delete technologies into one function
+// Maybe we should change getCharityProjects function to not return technologies as well
+// Use transactions for sql queries
 // Maybe open database in scripts folder and call it in install.sh or whatever my script will be called
 // Get SQL passwords for root and "ejoh" from a file or other more secure location

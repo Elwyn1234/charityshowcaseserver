@@ -56,20 +56,20 @@ func main() {
       if (err != nil) { log.Fatal(err.Error()) }
       log.Print("charityProject table created!")
     
-      _, err = pool.Exec(`CREATE TABLE techStack (
+      _, err = pool.Exec(`CREATE TABLE technology (
         name VARCHAR(32) NOT NULL,
         imageFileName VARCHAR(64) NOT NULL,
         PRIMARY KEY (name)
       )`)
       if (err != nil) { log.Fatal(err.Error()) }
-      log.Print("techStack table created!")
+      log.Print("technology table created!")
 
-      _, err = pool.Exec(`CREATE TABLE techStackToCharityProject (
-        techStack VARCHAR(50) NOT NULL,
+      _, err = pool.Exec(`CREATE TABLE technologyToCharityProject (
+        technology VARCHAR(50) NOT NULL,
         charityProject VARCHAR(50) NOT NULL,
-        PRIMARY KEY (techStack, charityProject),
-        FOREIGN KEY (techStack)
-          REFERENCES techStack(name)
+        PRIMARY KEY (technology, charityProject),
+        FOREIGN KEY (technology)
+          REFERENCES technology(name)
           ON DELETE CASCADE
           ON UPDATE CASCADE,
         FOREIGN KEY (charityProject)
@@ -78,7 +78,7 @@ func main() {
           ON UPDATE CASCADE
       );`)
       if (err != nil) { log.Fatal(err.Error()) }
-      log.Print("techStackToCharityProject table created!")
+      log.Print("technologyToCharityProject table created!")
 
       _, err = pool.Exec(`CREATE TABLE user (
         username VARCHAR(32) NOT NULL,
