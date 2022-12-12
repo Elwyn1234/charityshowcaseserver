@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql"
@@ -25,13 +26,12 @@ func main() {
   var errorWriter ErrorWriter
   logError = log.New(errorWriter, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
   var err error
-  pool, err = sql.Open("mysql", "ejoh:YEVT4w2^N4uv2q48TnA9#k&ep@(localhost:3307)/") // TODO: get the password from a file
+  pool, err = sql.Open("mysql", "ejoh:YEVT4w2^N4uv2q48TnA9#k&ep@(localhost:3307)/charityShowcase") // TODO: get the password from a file
   if (err != nil) { logError.Panic(err) }
-  if err := pool.Ping(); err != nil { logError.Panic(err) }
-  _, err = pool.Exec("USE charityShowcase")
+  err = pool.Ping()
   if (err != nil) { logError.Panic(err) }
 
-  http.HandleFunc("/charity-projects", handleCharityProjectsRequest)
+  http.HandleFunc("/charity-projects/", handleCharityProjectsRequest)
   http.HandleFunc("/technologies", handleTechnologiesRequest)
   http.HandleFunc("/login", login)
   http.HandleFunc("/register", register)
@@ -175,7 +175,12 @@ func handleCharityProjectsRequest(w http.ResponseWriter, r *http.Request) {
       createCharityProject(w, requestBody)
     }
     case http.MethodGet: {
-      getCharityProjects(w, requestBody)
+      pathSegments := strings.Split(r.URL.Path, "/")
+      if (len(pathSegments) <= 2 || pathSegments[2] == "") {
+        getCharityProjects(w)
+      } else {
+        getCharityProject(w, pathSegments[2]) // matches /charity-projects/:name
+      }
     }
     case http.MethodPut: {
       updateCharityProject(w, requestBody)
@@ -217,9 +222,61 @@ func createCharityProject(w http.ResponseWriter, requestBody []byte) {
 
 // var page = r.URL.Query()["page"][0]
 // var sort = r.URL.Query()["sort"][0]
+func getCharityProject(w http.ResponseWriter, charityProjectName string) {
+  sqlString := fmt.Sprintf(`SELECT * FROM charityProject WHERE name='%v'`, charityProjectName)
+  charityProjectResult := pool.QueryRow(sqlString)
+  charityProject := CharityProject {
+    Technologies: make([]Technology, 0),
+  }
+  err := charityProjectResult.Scan(&charityProject.Name, &charityProject.ShortDescription, &charityProject.LongDescription, &charityProject.Archived)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  sqlString = fmt.Sprintf(`SELECT technology FROM technologyToCharityProject WHERE charityProject='%v'`, charityProject.Name)
+  technologyToCharityProjectResult, err := pool.Query(sqlString)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+  for technologyToCharityProjectResult.Next() {
+    var technologyName string
+    if err := technologyToCharityProjectResult.Scan(&technologyName); err != nil {
+      logError.Print(err)
+      w.WriteHeader(http.StatusInternalServerError)
+      return
+    }
+
+    charityProject.Technologies = append(charityProject.Technologies, Technology {
+      Name: technologyName,
+    })
+  }
+
+  for i := 0; i < len(charityProject.Technologies); i++ {
+    technology := charityProject.Technologies[i]
+    sqlString := fmt.Sprintf(`SELECT imageFileName FROM technology WHERE name='%v'`, technology.Name)
+    technologyResult := pool.QueryRow(sqlString)
+    var technologyImageFileName string
+    err = technologyResult.Scan(&technologyImageFileName)
+    if (err != nil) {
+      logError.Print(err)
+      w.WriteHeader(http.StatusInternalServerError)
+      return
+    }
+    technology.SVG = technologyImageFileName
+  }
+
+  log.Print("getCharityProject: ", charityProject)
+
+  var jsonCharityProjects, _ = json.Marshal(charityProject)
+  w.Write(jsonCharityProjects)
+}
 
 // TODO: Add a count for how many we want to display on one page
-func getCharityProjects(w http.ResponseWriter, requestBody []byte) {
+func getCharityProjects(w http.ResponseWriter) {
   charityProjectResult, err := pool.Query(`SELECT * FROM charityProject`)
   if (err != nil) {
     logError.Print(err)
@@ -228,19 +285,14 @@ func getCharityProjects(w http.ResponseWriter, requestBody []byte) {
   }
   var charityProjects []CharityProject = make([]CharityProject, 0)
   for charityProjectResult.Next() {
-    var name string
-    var shortDescription string
-    var longDescription string
-    if err := charityProjectResult.Scan(&name, &shortDescription, &longDescription); err != nil {
+    charityProject := CharityProject {
+      Technologies: make([]Technology, 0),
+    }
+    err = charityProjectResult.Scan(&charityProject.Name, &charityProject.ShortDescription, &charityProject.LongDescription, &charityProject.Archived)
+    if err != nil {
       logError.Print(err)
       w.WriteHeader(http.StatusInternalServerError)
       return
-    }
-    charityProject := CharityProject {
-      Name: name,
-      ShortDescription: shortDescription,
-      LongDescription: longDescription,
-      Technologies: make([]Technology, 0),
     }
 
     charityProjects = append(charityProjects, charityProject)
@@ -298,7 +350,7 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
     return
   }
 
-  sqlString := fmt.Sprintf(`UPDATE charityProject SET name='%v', shortDescription='%v', longDescription='%v' WHERE name='%v'`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.OldName)
+  sqlString := fmt.Sprintf(`UPDATE charityProject SET name=COALESCE('%v', name), shortDescription=COALESCE('%v', shortDescription), longDescription=COALESCE('%v', longDescription), archived=COALESCE(%v, archived) WHERE name='%v'`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.Archived, charityProject.OldName)
   log.Print("updateCharityProject: ", sqlString)
   _, err = pool.Exec(sqlString)
   if (err != nil) {
@@ -328,6 +380,7 @@ type CharityProject struct {
   ShortDescription string
   LongDescription string
   Technologies []Technology
+  Archived bool
 }
 type TechnologyUpdate struct {
   OldName string
@@ -340,6 +393,7 @@ type CharityProjectUpdate struct {
   ShortDescription string
   LongDescription string
   Technologies []TechnologyUpdate
+  Archived bool
 }
 
 type User struct {
@@ -349,6 +403,7 @@ type User struct {
 }
 
 // TODO:
+// Don't use the default logger
 // charity-projects/:name/technologies
 // Abstract update, create, and delete technologies into one function
 // Maybe we should change getCharityProjects function to not return technologies as well

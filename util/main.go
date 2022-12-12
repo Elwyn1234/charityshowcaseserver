@@ -51,6 +51,7 @@ func main() {
         name VARCHAR(50) NOT NULL,
         shortDescription VARCHAR(300) NOT NULL,
         longDescription VARCHAR(5000) NOT NULL,
+        archived BOOL NOT NULL DEFAULT false,
         PRIMARY KEY (name)
       );`)
       if (err != nil) { log.Fatal(err.Error()) }
