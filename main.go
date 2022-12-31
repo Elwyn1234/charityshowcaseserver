@@ -165,6 +165,9 @@ func handleTechnologiesRequest(w http.ResponseWriter, r *http.Request) {
   w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
   w.Header().Add("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
   w.Header().Add("Access-Control-Allow-Credentials", "true")
+  if (r.Method == http.MethodOptions) {
+    return
+  }
 
   if !validateJwt(w, r) { return }
 
@@ -231,10 +234,14 @@ func handleCharityProjectsRequest(w http.ResponseWriter, r *http.Request) {
   w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
   w.Header().Add("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
   w.Header().Add("Access-Control-Allow-Credentials", "true")
+  if (r.Method == http.MethodOptions) {
+    return
+  }
 
   if !validateJwt(w, r) { 
     log.Print("not a vaild token")
-    return }
+    return
+  }
 
   requestBody, _ := ioutil.ReadAll(r.Body)
   switch r.Method {
@@ -244,7 +251,7 @@ func handleCharityProjectsRequest(w http.ResponseWriter, r *http.Request) {
     case http.MethodGet: {
       pathSegments := strings.Split(r.URL.Path, "/")
       if (len(pathSegments) <= 2 || pathSegments[2] == "") {
-        getCharityProjects(w)
+        getCharityProjects(w, r)
       } else {
         getCharityProject(w, pathSegments[2]) // matches /charity-projects/:name
       }
@@ -342,8 +349,9 @@ func getCharityProject(w http.ResponseWriter, charityProjectName string) {
   w.Write(jsonCharityProjects)
 }
 
-func getCharityProjects(w http.ResponseWriter) {
+func getCharityProjects(w http.ResponseWriter, r *http.Request) {
 // TODO: Add a count for how many we want to display on one page
+
   charityProjectResult, err := pool.Query(`SELECT * FROM charityProject`)
   if (err != nil) {
     logError.Print(err)
@@ -362,7 +370,13 @@ func getCharityProjects(w http.ResponseWriter) {
       return
     }
 
-    charityProjects = append(charityProjects, charityProject)
+    if  (r.URL.Query().Has("archived") && charityProject.Archived == true) ||
+        (r.URL.Query().Has("notArchived") && charityProject.Archived == false) ||
+        (!r.URL.Query().Has("archived") && !r.URL.Query().Has("notArchived")) ||
+        (r.URL.Query().Has("archived") && r.URL.Query().Has("notArchived")) {
+
+      charityProjects = append(charityProjects, charityProject)
+    }
   }
 
   for i := 0; i < len(charityProjects); i++ {
@@ -417,9 +431,23 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
     return
   }
 
-  sqlString := fmt.Sprintf(`UPDATE charityProject SET name=COALESCE('%v', name), shortDescription=COALESCE('%v', shortDescription), longDescription=COALESCE('%v', longDescription), archived=COALESCE(%v, archived) WHERE name='%v'`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.Archived, charityProject.OldName)
-  log.Print("updateCharityProject: ", sqlString)
-  _, err = pool.Exec(sqlString)
+  _, err = pool.Exec(`UPDATE charityProject SET name=IF(?='', name, ?), shortDescription=IF(?='', shortDescription, ?), longDescription=IF(?='', longDescription, ?), archived=? WHERE name=?`, // TODO: what if archived is not set in the json payload
+    charityProject.Name,
+    charityProject.Name,
+    charityProject.ShortDescription,
+    charityProject.ShortDescription,
+    charityProject.LongDescription,
+    charityProject.LongDescription,
+    charityProject.Archived,
+    charityProject.OldName) // TODO: this sql driver doesn't support named parameters, is there one that does. so that we can replace the above with the below
+
+  // _, err = pool.Exec(`UPDATE charityProject SET name=IF(@name='', name, @name), shortDescription=IF(@shortDescription='', shortDescription, @shortDescription), longDescription=IF(@longDescription='', longDescription, @longDescription), archived=IF(@archived='', archived, @archived) WHERE name=@oldName`,
+  //   sql.Named("name", charityProject.Name),
+  //   sql.Named("shortDescription", charityProject.ShortDescription),
+  //   sql.Named("longDescription", charityProject.LongDescription),
+  //   sql.Named("archived", charityProject.Archived),
+  //   sql.Named("oldName", charityProject.OldName))
+
   if (err != nil) {
     logError.Print(err)
     w.WriteHeader(http.StatusInternalServerError)
@@ -427,7 +455,7 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
   }
 
   for i := 0; i < len(charityProject.Technologies); i++ {
-    sqlString = fmt.Sprintf(`UPDATE technologyToCharityProject SET technology='%v' WHERE technology='%v' and charityProject='%v'`, charityProject.Technologies[i].Name, charityProject.Technologies[i].OldName, charityProject.Name)
+    sqlString := fmt.Sprintf(`UPDATE technologyToCharityProject SET technology='%v' WHERE technology='%v' and charityProject='%v'`, charityProject.Technologies[i].Name, charityProject.Technologies[i].OldName, charityProject.Name)
     log.Print("updateCharityProject: ", sqlString)
     _, err = pool.Exec(sqlString)
     if (err != nil) {
@@ -479,19 +507,13 @@ var pool *sql.DB
 var logError *log.Logger
 var privateKey *rsa.PrivateKey
 
-// TODO:
-// Don't use the default logger
-// charity-projects/:name/technologies
-// Abstract update, create, and delete technologies into one function
-// Maybe we should change getCharityProjects function to not return technologies as well
-// Use transactions for sql queries
-// Maybe open database in scripts folder and call it in install.sh or whatever my script will be called
-// Get SQL passwords for root and "ejoh" from a file or other more secure location
+//  /charity-projects/:name
+//  /charity-projects/ query params:
+//    archived (option): selects archived items and filters out others. Can be combined with notArchived however this will result in the same behaviour as not specifying either
+//    notArchived (option): selects items that are not archived and filters out others. Can be combined with archived however this will result in the same behaviour as not specifying either
 
-// SECURITY considerations:
-// TODO: CSRF will be mitigated by the fact that Access-Control-Allow-Origin will be set to the react app's domain. This means that only the react app can make requests to the Go server. CSRF could be used to hit a page of our React app such as /edit-charity-project/:name however this would only get and display the front end form to the victim (the user) but would not make any POST, PUT, or DELETE requests to the Go server where our database is. Therefore, the victim is protected from CSRF. This assumes that hitting any URL in our React app does not make automatic requests to the Go server. For example, hitting /delete-charity-project/:name should not immdediately delete the Charity Project record but should instead prompt the user to confirm deletion. This means that all actions require user confirmation or action and no CSRF is possible. Does CORS prevent non browser requests such as curl requests from impersonating a domain? At the moment, we are storing the JWT as a cookie and other sites will have access to this cookie but we are relying on the Go server to check that requests are being made by the React app's domain to stop other domains from making requests with the JWT cookie. Because of the above, I do not believe that we need to leverage the double submit cookie pattern.
+//  /technologies
 
-// DONE:
-  // TODO: Generate key pair
-  // TODO: make client store the token
-  // TODO: make client pass the token in for all requests
+//  /login
+//  /logout
+//  /register
