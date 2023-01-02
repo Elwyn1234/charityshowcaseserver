@@ -20,15 +20,16 @@ func main() {
   var errorWriter ErrorWriter
   logError = log.New(errorWriter, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
   var err error
-  pool, err = sql.Open("mysql", "ejoh:YEVT4w2^N4uv2q48TnA9#k&ep@(localhost:3307)/charityShowcase") // TODO: get the password from a file
+  pool, err = sql.Open("mysql", "ejoh:YEVT4w2^N4uv2q48TnA9#k&ep@(localhost:3307)/charityshowcase") // TODO: get the password from a file
   if (err != nil) { logError.Panic(err) }
   err = pool.Ping()
   if (err != nil) { logError.Panic(err) }
 
   privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 
-  http.HandleFunc("/charity-projects/", handleCharityProjectsRequest)
+  http.HandleFunc("/charity-projects/", handleCharityProjectsRequest) // TODO: why do we need a trailing slash? or can
   http.HandleFunc("/technologies", handleTechnologiesRequest)
+  http.HandleFunc("/users/", handleUsersRequest) // TODO: Make register a POST request to the users endpoint
   http.HandleFunc("/login", login)
   http.HandleFunc("/logout", logout)
   http.HandleFunc("/register", register)
@@ -105,6 +106,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
   w.Header().Add("Set-Cookie", "jwt=")
   w.Header().Add("Set-Cookie", "loggedIn=false")
+  w.Header().Add("Set-Cookie", "role=")
   log.Print("logout succesful")
 }
 
@@ -124,6 +126,7 @@ func setCookies(w http.ResponseWriter, user User) (error) {
   setCookieHeaderValue := fmt.Sprintf(`jwt=%v; Path=/; Domain=localhost; SameSite=None; Secure`, tokenString)
   w.Header().Add("Set-Cookie", setCookieHeaderValue) // TODO: will the jwt ever contain illegal characters 
   w.Header().Add("Set-Cookie", "loggedIn=true") // We do this to give the client an easy way to check if the user is logged in. This is ideal because the lifetime and scope of this cookie will match that of the jwt cookie, giving an accurate representation of whether the user is logged in. This is unlike browser memory, sessionStorage, and localStorage which all have different variable lifetimes and scope. Check this variable because TODO: jwt cookie will have httpOnly set, making it unreachable by js code.
+  w.Header().Add("Set-Cookie", fmt.Sprintf("role=%v", user.Role))
   return nil
 }
 
@@ -463,6 +466,77 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
       w.WriteHeader(http.StatusInternalServerError)
       return
     }
+  }
+}
+
+func handleUsersRequest(w http.ResponseWriter, r *http.Request) {
+  log.Print("hi")
+  w.Header().Add("Access-Control-Allow-Origin", "http://localhost:3000")
+  w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+  w.Header().Add("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE")
+  w.Header().Add("Access-Control-Allow-Credentials", "true")
+  if (r.Method == http.MethodOptions) {
+    return
+  }
+
+  if !validateJwt(w, r) { return }
+
+  requestBody, _ := ioutil.ReadAll(r.Body)
+  switch r.Method {
+    case http.MethodPost: {
+    }
+    case http.MethodGet: {
+      getUsers(w, requestBody)
+    }
+    case http.MethodPut: {
+      updateUser(w, requestBody)
+    }
+    case http.MethodDelete: {
+    }
+  }
+}
+
+func getUsers(w http.ResponseWriter, requestBody []byte) {
+  result, err := pool.Query(`SELECT username, role FROM user`)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  var users []User = make([]User, 0)
+  for result.Next() {
+    var user User;
+    if err := result.Scan(&user.Username, &user.Role); err != nil {
+      logError.Print(err)
+      w.WriteHeader(http.StatusInternalServerError)
+      return
+    }
+    users = append(users, user)
+  }
+  log.Print("getUsers: ", users)
+
+  var jsonUsers, _ = json.Marshal(users)
+  w.Write(jsonUsers)
+}
+
+func updateUser(w http.ResponseWriter, requestBody []byte) { // TODO: currently only supports updating the role, lets add more functionality when needed by the front end
+  var user User
+  var err = json.Unmarshal(requestBody, &user)
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  _, err = pool.Exec(`UPDATE user SET role=? WHERE username=?`,
+    user.Role,
+    user.Username)
+
+  if (err != nil) {
+    logError.Print(err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
   }
 }
 
