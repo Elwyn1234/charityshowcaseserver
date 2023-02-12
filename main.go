@@ -485,13 +485,13 @@ func handleUsersRequest(w http.ResponseWriter, r *http.Request) {
   switch r.Method {
     case http.MethodPost: {
     }
-    case http.MethodGet: {
+    case http.MethodGet: { // TODO: if not an admin, only allowed to retrieve your own user data
       getUsers(w, requestBody)
     }
-    case http.MethodPut: {
+    case http.MethodPut: { // TODO: if not an admin, only allowed to update your own user data
       updateUser(w, requestBody)
     }
-    case http.MethodDelete: {
+    case http.MethodDelete: { // TODO: if not an admin, only allowed to delete your own user data
     }
   }
 }

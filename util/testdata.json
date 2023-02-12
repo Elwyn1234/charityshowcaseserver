@@ -1,5 +1,5 @@
 {
-  "technologies": [{"name": "React"}, {"name": "Go"}, {"name": "MySQL"}, {"name": "Oracle"}, {"name": "JavaScript"}, {"name": "C"}, {"name": "Angular"}],
+  "technologies": [{"name": "React", "SVG": "\\assets\\icons\\icons8-react.svg"}, {"name": "Go"}, {"name": "MySQL"}, {"name": "Oracle"}, {"name": "JavaScript"}, {"name": "C"}, {"name": "Angular"}],
   "users": [
     {
       "username": "user1",
@@ -26,7 +26,7 @@
     {
       "name": "Charity Showcase",
       "shortDescription": "A showcase of charity projects developed by Accenture for charities around the globe.",
-      "longDescription": "",
+      "longDescription": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla feugiat augue eget felis posuere, sit amet cursus quam bibendum. Sed volutpat molestie gravida. Quisque viverra euismod aliquam. Aliquam ac felis finibus, aliquam eros laoreet, varius quam. Vestibulum vitae consectetur nisi, sed imperdiet nisi. In in feugiat quam, id vestibulum nunc. Phasellus sit amet volutpat leo. Cras dapibus, lectus sed consectetur congue, libero eros convallis lacus, laoreet fringilla libero sapien eget lorem. Sed vitae vehicula metus. Aliquam erat volutpat. In ut nunc feugiat, aliquet justo vitae, gravida mauris.\n\nDonec a neque volutpat, dictum nulla sollicitudin, euismod libero. Nunc pharetra eros sed ex tincidunt semper. Quisque porta metus ac venenatis sagittis. Curabitur a efficitur purus. Suspendisse sed laoreet lacus. Nam a pretium sem. Integer accumsan nibh erat, non consectetur mi posuere at. Etiam quis ante sit amet risus varius dapibus. Fusce elit est, luctus at laoreet quis, semper a leo. Nulla consequat sapien vitae tellus accumsan, a molestie orci ultricies. Curabitur convallis risus nec auctor cursus. Curabitur pellentesque lacus eu consequat convallis. Vestibulum gravida nisi id nunc facilisis, eget ullamcorper ex congue.\n\nDuis vel erat nunc. Suspendisse lorem sem, scelerisque eu vestibulum at, fermentum et purus. Nullam ac neque eu justo dignissim accumsan. Mauris rutrum sem et est eleifend commodo. Ut non nisl vitae magna sollicitudin imperdiet nec ac neque. Etiam malesuada diam ut nisl vestibulum semper. Nulla id lacus semper, facilisis tortor eu, tempus ex.",
       "archived": false,
       "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }]
     },
@@ -46,50 +46,31 @@
     },
     {
       "name": "GNU",
-      "shortDescription": "",
-      "longDescription": "",
+      "shortDescription": "Duis pulvinar ipsum ac vulputate interdum. Suspendisse pharetra vitae lacus eget tincidunt. Cras vel purus vitae urna pharetra tincidunt vitae nec justo.",
+      "longDescription": "Nullam dictum neque odio, id luctus lectus euismod eget. Morbi at tincidunt massa. Aenean cursus tortor quis tempor ultrices. Suspendisse venenatis ullamcorper euismod. Suspendisse tristique libero sapien, et viverra ipsum semper eget. Aenean sit amet varius sem. Sed sed efficitur tellus. Duis id viverra nulla, eget pretium elit. Suspendisse iaculis ultrices mattis. Suspendisse cursus elementum augue a mollis. Morbi varius eros sed vestibulum scelerisque. Etiam semper malesuada viverra. Pellentesque finibus mi vel nulla lobortis imperdiet. Phasellus gravida ipsum et congue cursus. Donec nulla urna, pulvinar vel diam id, tincidunt sollicitudin ante.\n\nCras vitae lorem nisl. Fusce dictum, nunc ac vestibulum vehicula, dolor enim dapibus magna, ut condimentum lectus nisi nec lectus. Praesent finibus elit molestie tincidunt accumsan. Aliquam ex sem, auctor sit amet quam id, vestibulum eleifend ligula. Duis porttitor leo ac velit pellentesque, nec vehicula justo dignissim. Suspendisse potenti. Pellentesque ut bibendum mauris. Aenean tristique malesuada diam pellentesque vulputate. Pellentesque luctus diam mauris, nec ornare lorem fermentum vel. Ut ac pellentesque felis.\n\nFusce egestas, ligula non rhoncus eleifend, augue augue dictum eros, eget euismod felis sapien sed quam. Donec finibus erat nec vehicula sollicitudin. Vivamus lacinia arcu ut elit pharetra mattis. Phasellus tincidunt ornare orci nec blandit. Donec elementum pulvinar lectus, ut posuere enim consequat at. Curabitur varius quis mauris quis mollis. Mauris vehicula suscipit elit, vel consectetur neque mollis in. Praesent sed nulla vitae dui molestie dignissim at sed sapien. Aliquam ante tortor, malesuada at gravida at, finibus a urna. Etiam sed odio aliquam dui mollis efficitur a eget urna. Sed pharetra sollicitudin neque. Curabitur quam libero, tempus varius maximus sit amet, volutpat id erat.",
       "archived": false,
       "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }]
     },
     {
       "name": "Eclipse",
-      "shortDescription": "",
-      "longDescription": "",
+      "shortDescription": "Curabitur et metus a neque imperdiet bibendum. Etiam pellentesque tellus erat. Proin et orci eros. Praesent consequat semper felis.",
+      "longDescription": "Fusce quis ante hendrerit, suscipit velit quis, consectetur velit. Vestibulum sit amet lectus eget tortor blandit aliquet. Praesent auctor, nunc at auctor tempus, neque nisi ultricies nisl, quis lacinia nulla nisl eget ligula. Ut eu dolor in sem fermentum sagittis. Cras ultricies ligula lorem, consequat ultrices metus vehicula vel. Morbi vitae leo congue quam interdum bibendum venenatis eu diam. Nam rhoncus mi quam, vel volutpat arcu finibus ut. Fusce vehicula scelerisque eleifend. Fusce hendrerit, sapien id viverra sagittis, diam dui tempor ligula, vel blandit dolor erat sed nisi. Vestibulum quam enim, iaculis sit amet orci nec, elementum euismod eros. Fusce posuere turpis id tortor tincidunt fringilla. Donec condimentum velit at sapien aliquam, id ultrices est finibus. Nullam lobortis arcu erat, et cursus orci elementum sit amet.\n\nPellentesque ultricies, leo in volutpat sodales, sapien ipsum pretium purus, a maximus purus dolor at sapien. Donec non facilisis sem, id mattis erat. Ut posuere turpis quis tempor malesuada. Nam posuere erat et mi tempor, non dictum ante gravida. Donec molestie luctus nibh, eu sollicitudin ipsum porttitor et. Phasellus feugiat velit ac luctus luctus. Mauris sollicitudin arcu imperdiet enim hendrerit, non blandit purus luctus. Curabitur eleifend mauris nec facilisis viverra.\n\nNulla porttitor metus nibh, quis consequat arcu fringilla tincidunt. Duis interdum turpis ac quam blandit, sit amet commodo dolor gravida. Suspendisse potenti. Phasellus blandit, nibh eget venenatis semper, risus odio bibendum risus, nec elementum sapien dui vitae nibh. Nullam non massa felis. Sed volutpat imperdiet rutrum. Nam imperdiet cursus risus posuere hendrerit.",
       "archived": false,
       "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }]
     },
     {
       "name": "Neovim",
-      "shortDescription": "",
-      "longDescription": "",
+      "shortDescription": "Proin blandit neque cursus nisl malesuada auctor. Fusce maximus vitae massa nec auctor. Maecenas a orci tempor, tristique mauris sit amet, ullamcorper est.",
+      "longDescription": "Fusce quis ante hendrerit, suscipit velit quis, consectetur velit. Vestibulum sit amet lectus eget tortor blandit aliquet. Praesent auctor, nunc at auctor tempus, neque nisi ultricies nisl, quis lacinia nulla nisl eget ligula. Ut eu dolor in sem fermentum sagittis. Cras ultricies ligula lorem, consequat ultrices metus vehicula vel. Morbi vitae leo congue quam interdum bibendum venenatis eu diam. Nam rhoncus mi quam, vel volutpat arcu finibus ut. Fusce vehicula scelerisque eleifend. Fusce hendrerit, sapien id viverra sagittis, diam dui tempor ligula, vel blandit dolor erat sed nisi. Vestibulum quam enim, iaculis sit amet orci nec, elementum euismod eros. Fusce posuere turpis id tortor tincidunt fringilla. Donec condimentum velit at sapien aliquam, id ultrices est finibus. Nullam lobortis arcu erat, et cursus orci elementum sit amet.\n\nPellentesque ultricies, leo in volutpat sodales, sapien ipsum pretium purus, a maximus purus dolor at sapien. Donec non facilisis sem, id mattis erat. Ut posuere turpis quis tempor malesuada. Nam posuere erat et mi tempor, non dictum ante gravida. Donec molestie luctus nibh, eu sollicitudin ipsum porttitor et. Phasellus feugiat velit ac luctus luctus. Mauris sollicitudin arcu imperdiet enim hendrerit, non blandit purus luctus. Curabitur eleifend mauris nec facilisis viverra.\n\nNulla porttitor metus nibh, quis consequat arcu fringilla tincidunt. Duis interdum turpis ac quam blandit, sit amet commodo dolor gravida. Suspendisse potenti. Phasellus blandit, nibh eget venenatis semper, risus odio bibendum risus, nec elementum sapien dui vitae nibh. Nullam non massa felis. Sed volutpat imperdiet rutrum. Nam imperdiet cursus risus posuere hendrerit.",
       "archived": true,
-      "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }],
-      "charity": "",
-      "charityContact": "",
-      "projectContact": "",
-      "location": "",
-      "people": ["Joe Bloggs", "Fred Bloggs"]
+      "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }]
     },
     {
       "name": "OpenStack",
       "shortDescription": "OpenStack is an open-source cloud operating system for many kinds of resources, from virtual machines, containers, to bare-metal servers.",
       "longDescription": "OpenStack’s control plane mainly targets Linux. FreeBSD is only unofficially supported as a guest operating system. Users can spawn FreeBSD instances on the open cloud platform, but it is not currently possible for administrators or operators to set up OpenStack deployments running on FreeBSD hosts. Given the increasingly important role of cloud-based deployments, and the popularity of OpenStack with various cloud providers, the FreeBSD Foundation has contracted Chin-Hsin Chang to port OpenStack components, so that OpenStack can be run on FreeBSD hosts.",
       "archived": false,
-      "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }],
-      "charity": "The FreeBSD Foundation",
-      "charityContact": "info@freebsdfoundation.org",
-      "projectContact": "info@freebsdfoundation.org",
-      "location": "California, USA",
-      "people": ["Joe Bloggs", "Fred Bloggs"],
-      "category": ""
-    }
-  ],
-
-
-
-  "charities": [
-    {
-      "shortDescription": "The FreeBSD Foundation is a United States-based 501(c)(3) registered non-profit organization dedicated to supporting the FreeBSD project, its development and its community"
+      "technologies": [{ "name": "React" }, { "name": "Go" }, { "name": "MySQL" }]
     }
   ]
 }
