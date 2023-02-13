@@ -53,7 +53,12 @@ func register(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  sqlString := fmt.Sprintf(`INSERT INTO user (username, password, role) VALUES ('%v', '%v', '%v')`, user.Username, user.Password, user.Role)
+  sqlString := fmt.Sprintf(`INSERT INTO user
+      (username, password, role)
+      VALUES ('%v', '%v', '%v')`,
+      user.Username,
+      user.Password,
+      user.Role)
   log.Print("register: ", sqlString)
   _, err = pool.Exec(sqlString)
   if (err != nil) {
@@ -198,7 +203,11 @@ func createTechnology(w http.ResponseWriter, requestBody []byte) {
     return
   }
 
-  sqlString := fmt.Sprintf(`INSERT INTO technology (name, imageFileName) VALUES ('%v', '%v')`, technology.Name, technology.SVG)
+  sqlString := fmt.Sprintf(`INSERT INTO technology
+      (name, imageFileName)
+      VALUES ('%v', '%v')`,
+      technology.Name,
+      technology.SVG)
   log.Print("createTechnology: ", sqlString)
   _, err = pool.Exec(sqlString)
   if (err != nil) {
@@ -276,7 +285,16 @@ func createCharityProject(w http.ResponseWriter, requestBody []byte) {
     return
   }
 
-  sqlString := fmt.Sprintf(`INSERT INTO charityProject (name, shortDescription, longDescription) VALUES ('%v', '%v', '%v')`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription)
+  sqlString := fmt.Sprintf(`INSERT INTO charityProject 
+      (name, shortDescription, longDescription, charityName, charityEmail, projectEmail, location)
+      VALUES ('%v', '%v', '%v', '%v', '%v', '%v', '%v')`,
+      charityProject.Name,
+      charityProject.ShortDescription,
+      charityProject.LongDescription,
+      charityProject.CharityName,
+      charityProject.CharityEmail,
+      charityProject.ProjectEmail,
+      charityProject.Location)
   log.Print("createCharityProject: ", sqlString)
   _, err = pool.Exec(sqlString)
   if (err != nil) {
@@ -286,7 +304,11 @@ func createCharityProject(w http.ResponseWriter, requestBody []byte) {
   }
 
   for i := 0; i < len(charityProject.Technologies); i++ {
-    sqlString = fmt.Sprintf(`INSERT INTO technologyToCharityProject (technology, charityProject) VALUES ('%v', '%v')`, charityProject.Technologies[i].Name, charityProject.Name)
+    sqlString = fmt.Sprintf(`INSERT INTO technologyToCharityProject
+        (technology, charityProject)
+        VALUES ('%v', '%v')`,
+        charityProject.Technologies[i].Name,
+        charityProject.Name)
     log.Print("createCharityProject: ", sqlString)
     _, err = pool.Exec(sqlString)
     if (err != nil) {
@@ -305,7 +327,15 @@ func getCharityProject(w http.ResponseWriter, charityProjectName string) {
   charityProject := CharityProject {
     Technologies: make([]Technology, 0),
   }
-  err := charityProjectResult.Scan(&charityProject.Name, &charityProject.ShortDescription, &charityProject.LongDescription, &charityProject.Archived)
+  err := charityProjectResult.Scan(
+      &charityProject.Name,
+      &charityProject.ShortDescription,
+      &charityProject.LongDescription,
+      &charityProject.CharityName,
+      &charityProject.CharityEmail,
+      &charityProject.ProjectEmail,
+      &charityProject.Location,
+      &charityProject.Archived)
   if (err != nil) {
     logError.Print(err)
     w.WriteHeader(http.StatusInternalServerError)
@@ -366,7 +396,15 @@ func getCharityProjects(w http.ResponseWriter, r *http.Request) {
     charityProject := CharityProject {
       Technologies: make([]Technology, 0),
     }
-    err = charityProjectResult.Scan(&charityProject.Name, &charityProject.ShortDescription, &charityProject.LongDescription, &charityProject.Archived)
+    err = charityProjectResult.Scan(
+        &charityProject.Name,
+        &charityProject.ShortDescription,
+        &charityProject.LongDescription,
+        &charityProject.CharityName,
+        &charityProject.CharityEmail,
+        &charityProject.ProjectEmail,
+        &charityProject.Location,
+        &charityProject.Archived) // TODO: call getCharityProject for each charity project?!
     if err != nil {
       logError.Print(err)
       w.WriteHeader(http.StatusInternalServerError)
@@ -434,15 +472,38 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
     return
   }
 
-  _, err = pool.Exec(`UPDATE charityProject SET name=IF(?='', name, ?), shortDescription=IF(?='', shortDescription, ?), longDescription=IF(?='', longDescription, ?), archived=? WHERE name=?`, // TODO: what if archived is not set in the json payload
-    charityProject.Name,
-    charityProject.Name,
-    charityProject.ShortDescription,
-    charityProject.ShortDescription,
-    charityProject.LongDescription,
-    charityProject.LongDescription,
-    charityProject.Archived,
-    charityProject.OldName) // TODO: this sql driver doesn't support named parameters, is there one that does. so that we can replace the above with the below
+  _, err = pool.Exec(`UPDATE charityProject SET
+      name=IF(?='', name, ?),
+      shortDescription=IF(?='', shortDescription, ?),
+      longDescription=IF(?='', longDescription, ?),
+      charityName=IF(?='', charityName, ?),
+      charityEmail=IF(?='', charityEmail, ?),
+      projectEmail=IF(?='', projectEmail, ?),
+      location=IF(?='', location, ?),
+      archived=? WHERE name=?`, // TODO: what if archived is not set in the json payload
+      charityProject.Name,
+      charityProject.Name,
+  
+      charityProject.ShortDescription,
+      charityProject.ShortDescription,
+  
+      charityProject.LongDescription,
+      charityProject.LongDescription,
+  
+      charityProject.CharityName,
+      charityProject.CharityName,
+  
+      charityProject.CharityEmail,
+      charityProject.CharityEmail,
+  
+      charityProject.ProjectEmail,
+      charityProject.ProjectEmail,
+  
+      charityProject.Location,
+      charityProject.Location,
+  
+      charityProject.Archived,
+      charityProject.OldName) // TODO: this sql driver doesn't support named parameters, is there one that does. so that we can replace the above with the below
 
   // _, err = pool.Exec(`UPDATE charityProject SET name=IF(@name='', name, @name), shortDescription=IF(@shortDescription='', shortDescription, @shortDescription), longDescription=IF(@longDescription='', longDescription, @longDescription), archived=IF(@archived='', archived, @archived) WHERE name=@oldName`,
   //   sql.Named("name", charityProject.Name),
@@ -458,7 +519,13 @@ func updateCharityProject(w http.ResponseWriter, requestBody []byte) {
   }
 
   for i := 0; i < len(charityProject.Technologies); i++ {
-    sqlString := fmt.Sprintf(`UPDATE technologyToCharityProject SET technology='%v' WHERE technology='%v' and charityProject='%v'`, charityProject.Technologies[i].Name, charityProject.Technologies[i].OldName, charityProject.Name)
+    sqlString := fmt.Sprintf(`UPDATE technologyToCharityProject
+        SET technology='%v'
+        WHERE technology='%v'
+        AND charityProject='%v'`,
+        charityProject.Technologies[i].Name,
+        charityProject.Technologies[i].OldName,
+        charityProject.Name)
     log.Print("updateCharityProject: ", sqlString)
     _, err = pool.Exec(sqlString)
     if (err != nil) {
@@ -485,13 +552,13 @@ func handleUsersRequest(w http.ResponseWriter, r *http.Request) {
   switch r.Method {
     case http.MethodPost: {
     }
-    case http.MethodGet: {
+    case http.MethodGet: { // TODO: if not an admin, only allowed to retrieve your own user data
       getUsers(w, requestBody)
     }
-    case http.MethodPut: {
+    case http.MethodPut: { // TODO: if not an admin, only allowed to update your own user data
       updateUser(w, requestBody)
     }
-    case http.MethodDelete: {
+    case http.MethodDelete: { // TODO: if not an admin, only allowed to delete your own user data
     }
   }
 }
@@ -553,6 +620,10 @@ type CharityProject struct {
   Name string
   ShortDescription string
   LongDescription string
+  CharityName string
+  CharityEmail string
+  ProjectEmail string
+  Location string
   Technologies []Technology
   Archived bool
 }
@@ -566,6 +637,10 @@ type CharityProjectUpdate struct {
   Name string
   ShortDescription string
   LongDescription string
+  CharityName string
+  CharityEmail string
+  ProjectEmail string
+  Location string
   Technologies []TechnologyUpdate
   Archived bool
 }

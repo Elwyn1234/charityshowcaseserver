@@ -24,13 +24,13 @@ func stringReplaceFirstGroup(regex string, str string, repl string) (newstr stri
 }
 
 func main() {
+  var errorWriter ErrorWriter
+  logError = log.New(errorWriter, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
   if (len(os.Args) < 2) {
     logError.Fatal("No subcommands specified. Exiting.")
   }
   
-  var errorWriter ErrorWriter
-  logError = log.New(errorWriter, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-
   createdbFlags := flag.NewFlagSet("createdb", flag.PanicOnError)
   var createdbFlagsForce bool
   createdbFlags.BoolVar(&createdbFlagsForce, "f", false, "")
@@ -97,7 +97,11 @@ func createdb(forceCreation bool) {
   _, err = pool.Exec(`CREATE TABLE charityProject (
     name VARCHAR(50) NOT NULL,
     shortDescription VARCHAR(300) NOT NULL,
-    longDescription VARCHAR(5000) NOT NULL,
+    longDescription VARCHAR(5000),
+    charityName VARCHAR(200),
+    charityEmail VARCHAR(100),
+    projectEmail VARCHAR(100) NOT NULL,
+    location VARCHAR(200) NOT NULL,
     archived BOOL NOT NULL DEFAULT false,
     PRIMARY KEY (name)
   );`)
@@ -106,7 +110,7 @@ func createdb(forceCreation bool) {
     
   _, err = pool.Exec(`CREATE TABLE technology (
     name VARCHAR(32) NOT NULL,
-    imageFileName VARCHAR(64) NOT NULL,
+    imageFileName VARCHAR(64),
     PRIMARY KEY (name)
   )`)
   if (err != nil) { logError.Fatal(err.Error()) }
@@ -166,7 +170,7 @@ func addTestData() {
 
   for i := 0; i < len(charityShowcase.CharityProjects); i++ {
     charityProject := charityShowcase.CharityProjects[i]
-    _, err = pool.Exec(`INSERT INTO charityproject (name, shortDescription, longDescription, archived) VALUES (?, ?, ?, ?);`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.Archived) // TODO: more secure credentials
+    _, err = pool.Exec(`INSERT INTO charityproject (name, shortDescription, longDescription, charityName, charityEmail, projectEmail, location, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.CharityName, charityProject.CharityEmail, charityProject.ProjectEmail, charityProject.Location, charityProject.Archived) // TODO: more secure credentials
     if (err != nil) { logError.Fatal(err.Error()) }
     for technologyIndex := 0; technologyIndex < len(charityProject.Technologies); technologyIndex++ {
       technology := charityProject.Technologies[technologyIndex]
@@ -198,6 +202,10 @@ type CharityProject struct {
   Name string
   ShortDescription string
   LongDescription string
+  CharityName string
+  CharityEmail string
+  ProjectEmail string
+  Location string
   Technologies []Technology
   Archived bool
 }
