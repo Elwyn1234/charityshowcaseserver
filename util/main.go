@@ -63,7 +63,7 @@ func main() {
 }
 
 func rootOpenDatabase(dbname string) (pool *sql.DB) {
-  pool, err := sql.Open("mysql", fmt.Sprintf("root:o1M@2UO4ngwg!i9R$3hvLSVpt@(localhost:3307)/%v", dbname)) // TODO: get the password from a file
+  pool, err := sql.Open("mysql", fmt.Sprintf("admin:ealkjwahebf@tcp(charity-showcase-database-mysql.cb6tbxpuewpo.eu-north-1.rds.amazonaws.com:3306)/%v", dbname)) // TODO: get the password from a file
   if (err != nil) { logError.Fatal(err.Error()) } // TODO: error handling
 
   pool.SetConnMaxLifetime(0)
@@ -170,11 +170,11 @@ func addTestData() {
 
   for i := 0; i < len(charityShowcase.CharityProjects); i++ {
     charityProject := charityShowcase.CharityProjects[i]
-    _, err = pool.Exec(`INSERT INTO charityproject (name, shortDescription, longDescription, charityName, charityEmail, projectEmail, location, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.CharityName, charityProject.CharityEmail, charityProject.ProjectEmail, charityProject.Location, charityProject.Archived) // TODO: more secure credentials
+    _, err = pool.Exec(`INSERT INTO charityProject (name, shortDescription, longDescription, charityName, charityEmail, projectEmail, location, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`, charityProject.Name, charityProject.ShortDescription, charityProject.LongDescription, charityProject.CharityName, charityProject.CharityEmail, charityProject.ProjectEmail, charityProject.Location, charityProject.Archived) // TODO: more secure credentials
     if (err != nil) { logError.Fatal(err.Error()) }
     for technologyIndex := 0; technologyIndex < len(charityProject.Technologies); technologyIndex++ {
       technology := charityProject.Technologies[technologyIndex]
-      _, err = pool.Exec(`INSERT INTO technologytocharityproject (technology, charityproject) VALUES (?, ?);`, technology.Name, charityProject.Name) // TODO: more secure credentials
+      _, err = pool.Exec(`INSERT INTO technologyToCharityProject (technology, charityProject) VALUES (?, ?);`, technology.Name, charityProject.Name) // TODO: more secure credentials
       if (err != nil) { logError.Fatal(err.Error()) }
     }
   }
