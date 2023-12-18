@@ -1,0 +1,58 @@
+lint:
+  stage: test
+  script:
+    - |
+      go vet
+  rules:
+    - $CI_PIPELINE_SOURCE == "push"
+
+test:
+  stage: test
+  script:
+    - |
+      go test
+  rules:
+    - $CI_PIPELINE_SOURCE == "push"
+
+validate:
+  stage: test
+  script:
+    - |
+      terraform init
+      terraform validate
+  rules:
+    - $CI_PIPELINE_SOURCE == "push"
+
+plan:
+  stage: deploy
+  script:
+    - |
+      terraform init
+      terraform plan
+  artifacts:
+    - "build/"
+  rules:
+    - $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - $CI_PIPELINE_SOURCE == "push"
+
+apply:
+  stage: deploy
+  script:
+    - |
+      terraform init
+      terraform apply
+  rules:
+    - $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - $CI_PIPELINE_SOURCE == "push"
+  dependencies: 
+    - "plan"
+
+# destroy:
+#   stage: deploy
+#   script:
+#     - |
+      terraform init
+      terraform destroy
+#   rules:
+#     - $CI_PIPELINE_SOURCE == "web"
+

@@ -1,0 +1,16 @@
+$Env:GOOS = "linux"
+$Env:GOARCH = "amd64"
+
+mkdir build
+mkdir build/lambdas
+cd lambdas
+  cd lambda1
+    go get .
+    go build -o ../../build/lambdas/lambda1
+  cd ..
+cd ..
+
+terraform init
+terraform plan -out build/terraform-plan
+terraform apply build/terraform-plan
+

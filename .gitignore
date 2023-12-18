@@ -1,2 +1,5 @@
 go.sum
 build/
+terraform.tfstate*
+.terraform*
+local/
