@@ -63,7 +63,7 @@ func main() {
 }
 
 func rootOpenDatabase(dbname string) (pool *sql.DB) {
-  pool, err := sql.Open("mysql", fmt.Sprintf("admin:ealkjwahebf@tcp(charity-showcase-database-mysql.cb6tbxpuewpo.eu-north-1.rds.amazonaws.com:3306)/%v", dbname)) // TODO: get the password from a file
+  pool, err := sql.Open("mysql", fmt.Sprintf("admin:ealkjwahebf@tcp(charity-showcase.cos7ursa6kc8.eu-west-2.rds.amazonaws.com:3306)/%v", dbname)) // TODO: get the password from a file
   if (err != nil) { logError.Fatal(err.Error()) } // TODO: error handling
 
   pool.SetConnMaxLifetime(0)
