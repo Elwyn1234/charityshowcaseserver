@@ -16,7 +16,7 @@ import (
 
 func main() {
   var err error
-  pool, err = sql.Open("mysql", "admin:ealkjwahebf@tcp(charity-showcase-database-mysql.cb6tbxpuewpo.eu-north-1.rds.amazonaws.com:3306)/charityshowcase") // TODO: get the password from a file
+  pool, err = sql.Open("mysql", "admin:ealkjwahebf@tcp(charity-showcase.cos7ursa6kc8.eu-west-2.rds.amazonaws.com:3306)/charityshowcase") // TODO: get the password from a file
   if (err != nil) { log.Panic(err) }
   err = pool.Ping()
   if (err != nil) { log.Panic(err) }
@@ -121,6 +121,27 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 
     case "DELETE": {
+      decodedBody, err := base64.StdEncoding.DecodeString(request.Body)
+      if (err != nil) {
+        log.Print(err)
+        response.StatusCode = 400
+        return response, nil
+      }
+
+      var user User
+      err = json.Unmarshal([]byte(decodedBody), &user)
+      if (err != nil) {
+        log.Print(err)
+        response.StatusCode = 400
+        return response, nil
+      }
+
+      err = deleteUser(user.Username)
+      if (err != nil) {
+        log.Print(err)
+        response.StatusCode = 500
+        return response, nil
+      }
     }
 
 
@@ -194,6 +215,22 @@ func putUser(user User) (error) {
   _, err := pool.Exec(`UPDATE user SET role=? WHERE username=?`,
     user.Role,
     user.Username)
+
+  if (err != nil) {
+    return err
+  }
+
+  return nil
+}
+
+
+
+
+
+
+func deleteUser(username string) (error) {
+  _, err := pool.Exec(`DELETE from user WHERE username=?`,
+    username)
 
   if (err != nil) {
     return err

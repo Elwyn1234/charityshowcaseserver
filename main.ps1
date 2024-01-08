@@ -8,6 +8,10 @@ cd lambdas
     go get .
     go build -o ../../build/lambdas/lambda1
   cd ..
+  cd users
+    go get .
+    go build -o ../../build/lambdas/users
+  cd ..
 cd ..
 
 terraform init

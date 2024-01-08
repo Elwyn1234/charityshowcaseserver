@@ -1,6 +1,6 @@
-#####################################################################################
+###########################################################################
 # IAM Role for Lambda
-#####################################################################################
+###########################################################################
 
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -30,9 +30,9 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
 
 
 
-#####################################################################################
+###########################################################################
 # Lambda Function - hello-world2
-#####################################################################################
+###########################################################################
 
 data "archive_file" "lambda" {
   type        = "zip"
@@ -61,9 +61,38 @@ resource "aws_lambda_function_url" "test_latest" {
 
 
 
-#####################################################################################
+###########################################################################
+# Lambda Function - users
+###########################################################################
+
+data "archive_file" "users" {
+  type        = "zip"
+  source_file = "build/lambdas/users"
+  output_path = "build/lambdas/users.zip"
+}
+
+resource "aws_lambda_function" "users" {
+  filename      = "build/lambdas/users.zip"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  function_name = "users"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "users"
+  runtime = "go1.x"
+}
+
+resource "aws_lambda_function_url" "users" {
+  function_name      = aws_lambda_function.users.function_name
+  authorization_type = "NONE"
+}
+
+
+
+
+
+
+###########################################################################
 # API Gateway
-#####################################################################################
+###########################################################################
 
 resource "aws_apigatewayv2_api" "lambda" {
   name          = "charity_showcase_api_gateway"
@@ -99,6 +128,15 @@ resource "aws_apigatewayv2_stage" "lambda" {
   }
 }
 
+
+
+
+
+
+###########################################################################
+# API Gateway - hello-world2
+###########################################################################
+
 resource "aws_apigatewayv2_integration" "hello-world2" {
   api_id = aws_apigatewayv2_api.lambda.id
 
@@ -118,6 +156,39 @@ resource "aws_lambda_permission" "api_gw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.hello-world2.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+
+
+
+
+
+###########################################################################
+# API Gateway - users
+###########################################################################
+
+resource "aws_apigatewayv2_integration" "users" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.users.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "users" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "ANY /users"
+  target    = "integrations/${aws_apigatewayv2_integration.users.id}"
+}
+
+resource "aws_lambda_permission" "users" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.users.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
