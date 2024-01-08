@@ -16,6 +16,10 @@ cd lambdas
     go get .
     go build -o ../../build/lambdas/charityProjects
   cd ..
+  cd technologies
+    go get .
+    go build -o ../../build/lambdas/technologies
+  cd ..
 cd ..
 
 terraform init

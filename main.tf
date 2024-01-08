@@ -120,6 +120,35 @@ resource "aws_lambda_function_url" "charityProjects" {
 
 
 ###########################################################################
+# Lambda Function - technologies
+###########################################################################
+
+data "archive_file" "technologies" {
+  type        = "zip"
+  source_file = "build/lambdas/technologies"
+  output_path = "build/lambdas/technologies.zip"
+}
+
+resource "aws_lambda_function" "technologies" {
+  filename      = "build/lambdas/technologies.zip"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  function_name = "technologies"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "technologies"
+  runtime = "go1.x"
+}
+
+resource "aws_lambda_function_url" "technologies" {
+  function_name      = aws_lambda_function.technologies.function_name
+  authorization_type = "NONE"
+}
+
+
+
+
+
+
+###########################################################################
 # API Gateway
 ###########################################################################
 
@@ -256,4 +285,36 @@ resource "aws_lambda_permission" "charityProjects" {
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
 }
 
+
+
+
+
+
+###########################################################################
+# API Gateway - technologies
+###########################################################################
+
+resource "aws_apigatewayv2_integration" "technologies" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.technologies.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "technologies" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "ANY /technologies"
+  target    = "integrations/${aws_apigatewayv2_integration.technologies.id}"
+}
+
+resource "aws_lambda_permission" "technologies" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.technologies.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
 
