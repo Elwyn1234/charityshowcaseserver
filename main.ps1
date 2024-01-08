@@ -12,6 +12,10 @@ cd lambdas
     go get .
     go build -o ../../build/lambdas/users
   cd ..
+  cd charityProjects
+    go get .
+    go build -o ../../build/lambdas/charityProjects
+  cd ..
 cd ..
 
 terraform init

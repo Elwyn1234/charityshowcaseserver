@@ -91,6 +91,35 @@ resource "aws_lambda_function_url" "users" {
 
 
 ###########################################################################
+# Lambda Function - charity-projects
+###########################################################################
+
+data "archive_file" "charityProjects" {
+  type        = "zip"
+  source_file = "build/lambdas/charityProjects"
+  output_path = "build/lambdas/charityProjects.zip"
+}
+
+resource "aws_lambda_function" "charityProjects" {
+  filename      = "build/lambdas/charityProjects.zip"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  function_name = "charityProjects"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "charityProjects"
+  runtime = "go1.x"
+}
+
+resource "aws_lambda_function_url" "charityProjects" {
+  function_name      = aws_lambda_function.charityProjects.function_name
+  authorization_type = "NONE"
+}
+
+
+
+
+
+
+###########################################################################
 # API Gateway
 ###########################################################################
 
@@ -193,4 +222,38 @@ resource "aws_lambda_permission" "users" {
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
 }
+
+
+
+
+
+
+###########################################################################
+# API Gateway - charity-projects
+###########################################################################
+
+resource "aws_apigatewayv2_integration" "charityProjects" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.charityProjects.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "charityProjects" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "ANY /charity-projects"
+  target    = "integrations/${aws_apigatewayv2_integration.charityProjects.id}"
+}
+
+resource "aws_lambda_permission" "charityProjects" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.charityProjects.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
 
