@@ -178,6 +178,35 @@ resource "aws_lambda_function_url" "login" {
 
 
 ###########################################################################
+# Lambda Function - register
+###########################################################################
+
+data "archive_file" "register" {
+  type        = "zip"
+  source_file = "build/lambdas/register"
+  output_path = "build/lambdas/register.zip"
+}
+
+resource "aws_lambda_function" "register" {
+  filename      = "build/lambdas/register.zip"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  function_name = "register"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "register"
+  runtime = "go1.x"
+}
+
+resource "aws_lambda_function_url" "register" {
+  function_name      = aws_lambda_function.register.function_name
+  authorization_type = "NONE"
+}
+
+
+
+
+
+
+###########################################################################
 # API Gateway
 ###########################################################################
 
@@ -375,6 +404,39 @@ resource "aws_lambda_permission" "login" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.login.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+
+
+
+
+
+###########################################################################
+# API Gateway - register
+###########################################################################
+
+resource "aws_apigatewayv2_integration" "register" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.register.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "register" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "ANY /register"
+  target    = "integrations/${aws_apigatewayv2_integration.register.id}"
+}
+
+resource "aws_lambda_permission" "register" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.register.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"

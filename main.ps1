@@ -28,10 +28,10 @@ cd lambdas
   #   go get .
   #   go build -o ../../build/lambdas/logout
   # cd ..
-  # cd register
-  #   go get .
-  #   go build -o ../../build/lambdas/register
-  # cd ..
+  cd register
+    go get .
+    go build -o ../../build/lambdas/register
+  cd ..
 cd ..
 
 terraform init
