@@ -24,10 +24,10 @@ cd lambdas
     go get .
     go build -o ../../build/lambdas/login
   cd ..
-  # cd logout
-  #   go get .
-  #   go build -o ../../build/lambdas/logout
-  # cd ..
+  cd logout
+    go get .
+    go build -o ../../build/lambdas/logout
+  cd ..
   cd register
     go get .
     go build -o ../../build/lambdas/register

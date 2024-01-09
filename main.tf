@@ -207,6 +207,35 @@ resource "aws_lambda_function_url" "register" {
 
 
 ###########################################################################
+# Lambda Function - logout
+###########################################################################
+
+data "archive_file" "logout" {
+  type        = "zip"
+  source_file = "build/lambdas/logout"
+  output_path = "build/lambdas/logout.zip"
+}
+
+resource "aws_lambda_function" "logout" {
+  filename      = "build/lambdas/logout.zip"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  function_name = "logout"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "logout"
+  runtime = "go1.x"
+}
+
+resource "aws_lambda_function_url" "logout" {
+  function_name      = aws_lambda_function.logout.function_name
+  authorization_type = "NONE"
+}
+
+
+
+
+
+
+###########################################################################
 # API Gateway
 ###########################################################################
 
@@ -437,6 +466,39 @@ resource "aws_lambda_permission" "register" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.register.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+
+
+
+
+
+###########################################################################
+# API Gateway - logout
+###########################################################################
+
+resource "aws_apigatewayv2_integration" "logout" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.logout.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "logout" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "ANY /logout"
+  target    = "integrations/${aws_apigatewayv2_integration.logout.id}"
+}
+
+resource "aws_lambda_permission" "logout" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.logout.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"

@@ -78,7 +78,6 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
         return response, nil
       }
 
-      response.StatusCode = 200
       response.Body = "{\"success\": true}"
       response.MultiValueHeaders = multiValueHeaders
     }
@@ -145,13 +144,6 @@ func setCookies(user User) (map[string][]string, error) {
 
   multiValueHeaders := make(map[string][]string)
   multiValueHeaders["Set-Cookie"] = cookies
-
-  for outer_key, outer_value := range multiValueHeaders {
-    log.Print("outer_key: ", outer_key)
-    for _, inner_value := range outer_value {
-      log.Print("inner_value: ", inner_value)
-    }
-  }
 
   return multiValueHeaders, nil
 }
